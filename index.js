@@ -1,45 +1,44 @@
 import initMap from './map'
-import { random, map, uniq } from 'lodash'
+import { filter, random, map, uniq } from 'lodash'
 
 function getLoans() {
 	return fetch('http://95.85.14.213:8080/loan/').then((a) => a.json());
 }
 
-function getLibrary(id) {
-	return new Promise((resolve) => resolve({
-		id: id,
-		latitude: random(55, 56, true),
-		longitude: random(8, 9, true)
-	}));
-}
-
 function getLibraries(loans) {
-	const libraryIds = uniq(map(loans, 'biblioteks_id'));
-	return Promise.all(map(libraryIds, getLibrary))
+	return fetch('http://95.85.14.213:8080/library/').then((a) => a.json());
 }
 
 function getLoansPerLibrary(loans) {
 	return loans.reduce((counts, loan) => {
-		const lastCount = counts[loan.biblioteks_id] || 0;
+		const lastCount = counts[loan.biblioteks_id] || 1;
 		return {...counts, [loan.biblioteks_id]: lastCount + 1};
 	}, {})
 }
 
 function createWeightedMap(libraries, loanCounts) {
-	return map(libraries, lib => {
+	const libsWithLoc = filter(libraries, (l) => !!l.latitude)
+	return map(libsWithLoc, lib => {
 		return {
 			location: new google.maps.LatLng(lib.latitude, lib.longitude),
-			weight: loanCounts[lib.id] * 1000
+			weight: loanCounts[lib.id] || 0
 		};
 	});
 }
 
-window.init = function() {
-	getLoans()
+var p = getLoans()
 		.then(loans => {
-			getLibraries(loans)
+			return getLibraries()
 				.then(libraries => {
-					initMap(createWeightedMap(libraries, getLoansPerLibrary(loans)));
-				})
-		})
+					console.log(libraries, loans);
+					return {libraries, loans};
+				});
+		});
+
+window.init = function() {
+	p.then(({libraries, loans}) => {
+		const map = createWeightedMap(libraries, getLoansPerLibrary(loans));
+		console.log(map);
+		initMap(map);
+	});
 };

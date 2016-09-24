@@ -6,7 +6,6 @@
 var map, heatmap;
 
 function initMap(points) {
-	console.log(points);
 	map = new google.maps.Map(document.getElementById('map'), {
 		zoom: 7,
 		center: { lat: 55.8325, lng: 10.5922 },
