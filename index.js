@@ -1,8 +1,5 @@
 import initMap from './map'
-import * as util from 'util'
-import random from 'lodash.random'
-import map from 'lodash.map'
-import uniq from 'lodash.uniq'
+import { random, map, uniq } from 'lodash'
 
 function getLoans() {
 	return fetch('http://95.85.14.213:8080/loan/').then((a) => a.json());
@@ -29,10 +26,9 @@ function getLoansPerLibrary(loans) {
 }
 
 function createWeightedMap(libraries, loanCounts) {
-	debugger;
 	return map(libraries, lib => {
 		return {
-			location: new google.maps.LatLng(lib.longitude, lib.latitude),
+			location: new google.maps.LatLng(lib.latitude, lib.longitude),
 			weight: loanCounts[lib.id] * 1000
 		};
 	});
