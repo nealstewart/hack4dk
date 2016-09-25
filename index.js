@@ -1,17 +1,17 @@
-import initMap from './map'
+import {initMap, updateHeatmap} from './map'
 import { filter, random, map, uniq } from 'lodash'
 
-function getLoans() {
-	return fetch('http://95.85.14.213:8080/loan/').then((a) => a.json());
+function getLoans(page) {
+	return fetch('http://95.85.14.213/loan/?page=' + page).then((a) => a.json());
 }
 
-function getLibraries(loans) {
-	return fetch('http://95.85.14.213:8080/library/').then((a) => a.json());
+function getLibraries() {
+	return fetch('http://95.85.14.213/library/').then((a) => a.json());
 }
 
 function getLoansPerLibrary(loans) {
 	return loans.reduce((counts, loan) => {
-		const lastCount = counts[loan.biblioteks_id] || 1;
+		const lastCount = counts[loan.biblioteks_id] || 0;
 		return {...counts, [loan.biblioteks_id]: lastCount + 1};
 	}, {})
 }
@@ -26,19 +26,26 @@ function createWeightedMap(libraries, loanCounts) {
 	});
 }
 
-var p = getLoans()
-		.then(loans => {
-			return getLibraries()
-				.then(libraries => {
-					console.log(libraries, loans);
-					return {libraries, loans};
-				});
-		});
+const LIBRARIES = getLibraries();
 
 window.init = function() {
-	p.then(({libraries, loans}) => {
-		const map = createWeightedMap(libraries, getLoansPerLibrary(loans));
-		console.log(map);
-		initMap(map);
-	});
+	Promise.all([LIBRARIES, getLoans(0)])
+		.then(([libraries, loans]) => {
+			initMap(createWeightedMap(libraries, getLoansPerLibrary(loans)));
+		})
+		.catch(err => console.error(err));
+};
+
+var page = 0;
+window.animate = function() {
+	console.log('animate');
+	setInterval(() => {
+		Promise.all([LIBRARIES, getLoans(page++)])
+			.then(([libraries, loans]) => {
+				const map = createWeightedMap(libraries, getLoansPerLibrary(loans));
+				updateHeatmap(map);
+			})
+			.catch(err => console.error(err));
+	}, 400);
+
 };
