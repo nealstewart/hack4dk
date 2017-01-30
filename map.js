@@ -5,8 +5,8 @@
 
 var map, heatmap, arr;
 
-export function initMap(points) {
-	arr = new google.maps.MVCArray(points);
+export function initMap() {
+	arr = new google.maps.MVCArray([]);
 	map = new google.maps.Map(document.getElementById('map'), {
 		zoom: 7,
 		center: { lat: 55.8325, lng: 10.5922 },
@@ -16,8 +16,9 @@ export function initMap(points) {
 		data: arr,
 		map: map
 	});
-	var radius = 15;
+	var radius = 1;
 	heatmap.set('radius', radius);
+	setInterval(() => heatmap.set('radius', radius++), 100);
 }
 
 export function updateHeatmap(points) {
